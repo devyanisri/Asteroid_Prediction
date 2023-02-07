@@ -1,0 +1,279 @@
+---
+title: "Data_collection_nasa"
+author: "Devyani Srivastava"
+date: "2023-02-05"
+output: html_document
+---
+
+```{r}
+library(httr)
+library(jsonlite)
+library(tidyverse)
+library(dplyr)
+library(stringr)
+library(ggplot2)
+```
+
+
+
+```{r}
+
+api_extraction<-function(info_url){
+base_url<-"https://api.nasa.gov/neo/rest/v1"
+
+
+full_url <- base::paste0(base_url, info_url)
+api_call <- httr::GET(full_url)
+api_char<-base::rawToChar(api_call$content)
+api_JSON <- jsonlite::fromJSON(api_char, flatten = TRUE)
+
+doc<-api_JSON$near_earth_objects
+
+doc<-doc %>% reduce(full_join, by=c("id","neo_reference_id","name","nasa_jpl_url","absolute_magnitude_h" ,"is_potentially_hazardous_asteroid" , "close_approach_data", "is_sentry_object" , "links.self", "estimated_diameter.kilometers.estimated_diameter_min", "estimated_diameter.kilometers.estimated_diameter_max" ,  "estimated_diameter.meters.estimated_diameter_min" , "estimated_diameter.meters.estimated_diameter_max", "estimated_diameter.miles.estimated_diameter_min", "estimated_diameter.feet.estimated_diameter_min", "estimated_diameter.feet.estimated_diameter_max"))
+
+return(doc)}
+```
+
+```{r}
+info_url_1<-"/feed?start_date=2022-12-31&end_date=2023-01-06&api_key=8N1U2yJiitmu5P7VIQqFTsIclOHa7LwfvyIChlXP"
+
+doc_first_week_jan<-api_extraction(info_url_1)
+```
+```{r}
+estimated_dia_miles_jan_1<-c('estimated_diameter.miles.estimated_diameter_max.x','estimated_diameter.miles.estimated_diameter_max.x.x','estimated_diameter.miles.estimated_diameter_max.x.x.x','estimated_diameter.miles.estimated_diameter_max.y','estimated_diameter.miles.estimated_diameter_max.y.y','estimated_diameter.miles.estimated_diameter_max.y.y.y')
+doc_first_week_jan<-unite(doc_first_week_jan,col='estimated_diameter.miles.estimated_diameter_max',estimated_dia_miles_jan_1)
+
+```
+```{r}
+doc_first_week_jan$estimated_diameter.miles.estimated_diameter_max<-str_remove_all(doc_first_week_jan$estimated_diameter.miles.estimated_diameter_max ,'NA')
+doc_first_week_jan$estimated_diameter.miles.estimated_diameter_max<-str_remove_all(doc_first_week_jan$estimated_diameter.miles.estimated_diameter_max ,'_')
+doc_first_week_jan$estimated_diameter.miles.estimated_diameter_max<-as.numeric(doc_first_week_jan$estimated_diameter.miles.estimated_diameter_max)
+
+class(doc_first_week_jan$estimated_diameter.miles.estimated_diameter_max)
+```
+
+
+
+```{r eval=FALSE}
+info_url_2<-"/feed?start_date=2023-01-07&end_date=2023-01-14&api_key=8N1U2yJiitmu5P7VIQqFTsIclOHa7LwfvyIChlXP"
+
+api_extraction(info_url_2)
+```
+```{r eval=FALSE}
+doc_jan_second_week<-api_extraction(info_url_2) %>% reduce(full_join, by=c("id","neo_reference_id","name","nasa_jpl_url","absolute_magnitude_h" ,"is_potentially_hazardous_asteroid" , "close_approach_data", "is_sentry_object" , "links.self", "estimated_diameter.kilometers.estimated_diameter_min", "estimated_diameter.kilometers.estimated_diameter_max" ,  "estimated_diameter.meters.estimated_diameter_min" , "estimated_diameter.meters.estimated_diameter_max", "estimated_diameter.miles.estimated_diameter_min", "estimated_diameter.feet.estimated_diameter_min", "estimated_diameter.feet.estimated_diameter_max"))
+```
+
+```{r eval=FALSE}
+doc_jan_second_week
+
+#they are repeated values because distance will change , therefore we will take the minimum of
+```
+
+```{r}
+estimated_dia_miles_jan_2<-c('estimated_diameter.miles.estimated_diameter_max.x','estimated_diameter.miles.estimated_diameter_max.x.x','estimated_diameter.miles.estimated_diameter_max.x.x.x','estimated_diameter.miles.estimated_diameter_max.x.x.x.x','estimated_diameter.miles.estimated_diameter_max.y','estimated_diameter.miles.estimated_diameter_max.y.y','estimated_diameter.miles.estimated_diameter_max.y.y.y','estimated_diameter.miles.estimated_diameter_max.y.y.y.y')
+
+estimated_dia_miles
+```
+```{r}
+doc_jan_second_week<-unite(doc_jan_second_week,col='estimated_diameter.miles.estimated_diameter_max',estimated_dia_miles)
+```
+
+
+
+
+```{reval=FALSE}
+info_url_3<-"/feed?start_date=2023-01-15&end_date=2023-01-22&api_key=8N1U2yJiitmu5P7VIQqFTsIclOHa7LwfvyIChlXP"
+
+doc_third_week_jan<-api_extraction(info_url_3)
+```
+
+```{r}
+doc_third_week_jan<-unite(doc_third_week_jan,col='estimated_diameter.miles.estimated_diameter_max',estimated_dia_miles_jan_2)
+
+doc_third_week_jan$estimated_diameter.miles.estimated_diameter_max<-str_remove_all(doc_third_week_jan$estimated_diameter.miles.estimated_diameter_max ,'NA')
+doc_third_week_jan$estimated_diameter.miles.estimated_diameter_max<-str_remove_all(doc_third_week_jan$estimated_diameter.miles.estimated_diameter_max ,'_')
+doc_third_week_jan$estimated_diameter.miles.estimated_diameter_max<-as.numeric(doc_third_week_jan$estimated_diameter.miles.estimated_diameter_max)
+
+class(doc_third_week_jan$estimated_diameter.miles.estimated_diameter_max)
+```
+```{r}
+data_cleaning<-function(doc1){
+  
+  estimated_dia_miles<-c('estimated_diameter.miles.estimated_diameter_max.x','estimated_diameter.miles.estimated_diameter_max.x.x','estimated_diameter.miles.estimated_diameter_max.x.x.x','estimated_diameter.miles.estimated_diameter_max.x.x.x.x','estimated_diameter.miles.estimated_diameter_max.y','estimated_diameter.miles.estimated_diameter_max.y.y','estimated_diameter.miles.estimated_diameter_max.y.y.y','estimated_diameter.miles.estimated_diameter_max.y.y.y.y')
+  doc1<-unite(doc1,col='estimated_diameter.miles.estimated_diameter_max',estimated_dia_miles_jan_2)
+
+doc1$estimated_diameter.miles.estimated_diameter_max<-str_remove_all(doc1$estimated_diameter.miles.estimated_diameter_max ,'NA')
+doc1$estimated_diameter.miles.estimated_diameter_max<-str_remove_all(doc1$estimated_diameter.miles.estimated_diameter_max ,'_')
+doc1$estimated_diameter.miles.estimated_diameter_max<-as.numeric(doc1$estimated_diameter.miles.estimated_diameter_max)
+
+#class(doc1$estimated_diameter.miles.estimated_diameter_max)
+
+return(doc1)
+}
+```
+```{r}
+info_url_4<-"/feed?start_date=2023-01-23&end_date=2023-01-30&api_key=8N1U2yJiitmu5P7VIQqFTsIclOHa7LwfvyIChlXP"
+
+doc_fourth_week_jan<-api_extraction(info_url_4)
+doc_fourth_week_jan<-data_cleaning(doc_fourth_week_jan)
+
+```
+
+
+```{r}
+data_cleaning_1<-function(doc2){
+  
+  estimated_dia_miles<-c('estimated_diameter.miles.estimated_diameter_max.x','estimated_diameter.miles.estimated_diameter_max.x.x','estimated_diameter.miles.estimated_diameter_max.x.x.x','estimated_diameter.miles.estimated_diameter_max.y','estimated_diameter.miles.estimated_diameter_max.y.y','estimated_diameter.miles.estimated_diameter_max.y.y.y')
+  doc2<-unite(doc2,col='estimated_diameter.miles.estimated_diameter_max',estimated_dia_miles)
+
+doc2$estimated_diameter.miles.estimated_diameter_max<-str_remove_all(doc2$estimated_diameter.miles.estimated_diameter_max ,'NA')
+doc2$estimated_diameter.miles.estimated_diameter_max<-str_remove_all(doc2$estimated_diameter.miles.estimated_diameter_max ,'_')
+doc2$estimated_diameter.miles.estimated_diameter_max<-as.numeric(doc2$estimated_diameter.miles.estimated_diameter_max)
+
+#class(doc1$estimated_diameter.miles.estimated_diameter_max)
+
+return(doc2)}
+```
+
+```{r}
+info_url_dec.1<-"/feed?start_date=2022-12-01&end_date=2022-12-07&api_key=8N1U2yJiitmu5P7VIQqFTsIclOHa7LwfvyIChlXP"
+
+doc_first_week_dec<-api_extraction(info_url_dec.1)
+doc_first_week_dec<-data_cleaning_1(doc_first_week_dec)
+
+```
+
+```{r}
+info_url_dec.2<-"/feed?start_date=2022-12-08&end_date=2022-12-15&api_key=8N1U2yJiitmu5P7VIQqFTsIclOHa7LwfvyIChlXP"
+
+doc_sec_week_dec<-api_extraction(info_url_dec.2)
+doc_sec_week_dec<-data_cleaning(doc_sec_week_dec)
+```
+
+```{r}
+info_url_dec.3<-"/feed?start_date=2022-12-16&end_date=2022-12-23&api_key=8N1U2yJiitmu5P7VIQqFTsIclOHa7LwfvyIChlXP"
+
+doc_thd_week_dec<-api_extraction(info_url_dec.3)
+doc_thd_week_dec<-data_cleaning(doc_thd_week_dec)
+```
+
+```{r}
+info_url_dec.4<-"/feed?start_date=2022-12-24&end_date=2022-12-30&api_key=8N1U2yJiitmu5P7VIQqFTsIclOHa7LwfvyIChlXP"
+
+doc_four_week_dec<-api_extraction(info_url_dec.4)
+doc_four_week_dec<-data_cleaning_1(doc_four_week_dec)
+```
+```{r}
+info_url_nov.1<-"/feed?start_date=2022-11-01&end_date=2022-11-07&api_key=8N1U2yJiitmu5P7VIQqFTsIclOHa7LwfvyIChlXP"
+
+doc_first_week_nov<-api_extraction(info_url_nov.1)
+doc_first_week_nov<-data_cleaning_1(doc_first_week_nov)
+```
+
+```{r}
+info_url_nov.2<-"/feed?start_date=2022-11-08&end_date=2022-11-15&api_key=8N1U2yJiitmu5P7VIQqFTsIclOHa7LwfvyIChlXP"
+
+doc_sec_week_nov<-api_extraction(info_url_nov.2)
+doc_sec_week_nov<-data_cleaning(doc_sec_week_nov)
+```
+
+```{r}
+info_url_nov.3<-"/feed?start_date=2022-11-16&end_date=2022-11-23&api_key=8N1U2yJiitmu5P7VIQqFTsIclOHa7LwfvyIChlXP"
+
+doc_thr_week_nov<-api_extraction(info_url_nov.3)
+doc_thr_week_nov<-data_cleaning(doc_thr_week_nov)
+```
+
+```{r}
+info_url_nov.4<-"/feed?start_date=2022-11-01&end_date=2022-11-07&api_key=8N1U2yJiitmu5P7VIQqFTsIclOHa7LwfvyIChlXP"
+
+doc_four_week_nov<-api_extraction(info_url_nov.4)
+doc_four_week_nov<-data_cleaning_1(doc_four_week_nov)
+```
+
+```{r}
+df_list_nov_jan_2<-list(doc_first_week_nov,doc_sec_week_nov,doc_thr_week_nov,doc_four_week_nov,doc_first_week_dec,doc_sec_week_dec,doc_thd_week_dec, doc_four_week_dec, doc_first_week_jan, doc_jan_second_week,doc_third_week_jan,doc_fourth_week_jan)
+
+col_names<-c("id","neo_reference_id","name","nasa_jpl_url","absolute_magnitude_h" ,"is_potentially_hazardous_asteroid" , "close_approach_data", "is_sentry_object" , "links.self", "estimated_diameter.kilometers.estimated_diameter_min", "estimated_diameter.kilometers.estimated_diameter_max" ,  "estimated_diameter.meters.estimated_diameter_min" , "estimated_diameter.meters.estimated_diameter_max", "estimated_diameter.miles.estimated_diameter_min", "estimated_diameter.feet.estimated_diameter_min", "estimated_diameter.feet.estimated_diameter_max")
+
+df_list_nov_jan_2<-df_list_nov_jan_2 %>% reduce(full_join,col_names)
+```
+
+cleaning the estimated miles diameter feature
+
+
+```{r}
+estimated_dia_miles_3<-c('estimated_diameter.miles.estimated_diameter_max.x','estimated_diameter.miles.estimated_diameter_max.x.x','estimated_diameter.miles.estimated_diameter_max.x.x.x.x','estimated_diameter.miles.estimated_diameter_max.x.x.x.x.x','estimated_diameter.miles.estimated_diameter_max.x.x.x.x.x.x','estimated_diameter.miles.estimated_diameter_max.y','estimated_diameter.miles.estimated_diameter_max.y.y','estimated_diameter.miles.estimated_diameter_max.y.y.y.y','estimated_diameter.miles.estimated_diameter_max.y.y.y.y.y','estimated_diameter.miles.estimated_diameter_max.y.y.y.y.y.y')
+
+#'estimated_diameter.miles.estimated_diameter_max.x.x.x'
+#,'estimated_diameter.miles.estimated_diameter_max.y.y.y'
+df_list_nov_jan_2<-unite(df_list_nov_jan_2,col='estimated_diameter.miles.estimated_diameter_max',estimated_dia_miles_3)
+
+```
+
+```{r}
+df_list_nov_jan_2$estimated_diameter.miles.estimated_diameter_max<-str_remove_all(df_list_nov_jan_2$estimated_diameter.miles.estimated_diameter_max ,'NA')
+df_list_nov_jan_2$estimated_diameter.miles.estimated_diameter_max<-str_remove_all(df_list_nov_jan_2$estimated_diameter.miles.estimated_diameter_max ,'_')
+
+```
+
+
+
+```{r}
+df_list_nov_jan$estimated_diameter.miles.estimated_diameter_max<-as.numeric(df_list_nov_jan$estimated_diameter.miles.estimated_diameter_max)
+```
+
+```{r}
+for (i in 1:nrow(df_list_nov_jan_1)){
+  df_list_nov_jan_1[i,'estimated_diameter.miles.estimated_diameter_max'] = substr(df_list_nov_jan_1[i,'estimated_diameter.miles.estimated_diameter_max'],1,13)}
+```
+
+
+```{r}
+df_list_nov_jan_1$estimated_diameter.miles.estimated_diameter_max<-as.numeric(df_list_nov_jan_1$estimated_diameter.miles.estimated_diameter_max)
+```
+
+```{r}
+df_list_nov_jan_1<-df_list_nov_jan_1%>% drop_na()
+```
+
+
+
+```{r}
+df_list_nov_jan_1<-df_list_nov_jan_1%>% unnest(close_approach_data)
+```
+
+
+data wrangling
+```{r}
+df_list_nov_jan_1%>%count(orbiting_body)
+df_list_nov_jan_1%>%count(is_sentry_object)
+```
+
+
+
+```{r}
+df_list_nov_jan_1<-df_list_nov_jan_1 %>% select ( -c('nasa_jpl_url', 'links.self', 'close_approach_date_full', 'orbiting_body', 'close_approach_date','is_sentry_object') )
+
+```
+
+```{r}
+dim(df_list_nov_jan_1)
+```
+```{r}
+df_list_nov_jan_1 %>% is.na() %>% sum()
+```
+
+```{r}
+df_list_nov_jan_1$id %>% unique() %>%length()
+
+df_list_nov_jan_1$name %>% unique() %>%length()
+
+```
+
+
+
+
+
+
+

@@ -1,0 +1,163 @@
+---
+title: "Assignment_ml_1"
+author: "Devyani Srivastava"
+date: "2023-02-04"
+output: html_document
+---
+```{r}
+library(dplyr)
+library(tidyverse)
+library(psych)
+```
+```{r}
+doc2<-read.csv("C:/Users/devya/OneDrive/Desktop/ML Project Asteroid/Asteroid_Prediction/data/dataset.csv")
+head(doc2)
+```
+
+
+```{r}
+doc2 %>% is.na() %>% sum()
+doc2 %>% dim()
+
+```
+```{r}
+doc2$id %>% unique() %>%length()
+doc2$spkid %>% unique() %>% length()
+doc2$full_name %>% unique() %>%length()
+doc2$pdes %>% unique() %>% length()
+```
+```{r}
+doc2 %>% count(pha)
+```
+
+
+
+```{r}
+doc2 %>% count(neo)
+```
+
+
+```{r}
+doc2$orbit_id %>% unique() %>% length()
+```
+
+```{r}
+doc2$prefix %>% unique() 
+```
+
+```{r}
+doc2$equinox %>% unique() 
+```
+
+```{r}
+doc2$class %>% unique() 
+doc2$class %>% unique() %>%length()
+```
+dropping certain columns
+
+```{r}
+doc2_1<-doc2 %>% select(-c('id','pdes','name','prefix','equinox',)) %>% head(5000)
+
+```
+
+```{r}
+doc2_1 %>% names()
+```
+```{r}
+doc2_1<-doc2_1 %>% drop_na(H) 
+doc2_1<-doc2_1 %>% drop_na(sigma_ad)
+doc2_1<-doc2_1 %>% drop_na(ma)
+```
+
+```{r}
+doc2_1$neo<-doc2_1$neo %>% as.factor()
+doc2_1$pha <- doc2_1$pha %>% as.factor()
+doc2_1$class <- doc2_1$class %>% as.factor()
+```
+
+```{r}
+doc2_1<-doc2_1%>%drop_na()
+```
+
+
+Percentage of asteroids near earth
+```{r}
+doc2_1 %>% count(neo)
+
+```
+## check again
+```{r}
+doc2_1 %>% filter(neo=='Y') %>% count(pha)
+```
+# How many asteroids of the dataset are potentially hazardous asteroids?
+```{r}
+doc2_1 %>% count(pha)
+```
+
+# Of the potentially hazardous asteroids, what percent of them are near earth objects?
+
+```{r}
+doc2_1 %>% filter(pha=='Y') %>% count(neo)
+
+percent_neo=(2066/2066)*100
+percent_neo
+```
+# What is the distribution of the orbit classification?
+```{r}
+
+doc2_1 %>% arrange() %>%count(class) 
+
+```
+```{r}
+doc2_1$orbit_id %>% unique() %>% length()
+```
+
+
+EDA
+
+```{r}
+doc2_1 %>%ggplot()+ geom_bar(aes(x=class))
+
+```
+```{r}
+doc2_1 %>%ggplot()+geom_bar(aes(x="pha"))
+```
+
+```{r}
+ggplot(doc2_1)+ geom_bar(aes(x="neo",color='pha'))
+```
+```{r}
+
+pairs.panels(doc2_1[3:10])
+```
+```{r}
+pairs.panels(doc2_1[11:20])
+```
+
+```{r}
+pairs.panels(doc2_1[21:30])
+```
+
+```{r}
+pairs.panels(doc2_1[31:40])
+```
+
+
+```{r}
+d<-density(doc2_1$diameter)
+plot(d)
+```
+```{r}
+e<-density(doc2_1$e)
+plot(e)
+```
+```{r}
+r_ms<-density(doc2_1$rms)
+plot(r_ms)
+```
+```{r}
+a_d<-density(doc2_1$ad)
+plot(a_d)
+```
+
+
