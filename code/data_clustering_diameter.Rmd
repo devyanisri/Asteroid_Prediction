@@ -1,0 +1,245 @@
+---
+title: "asteroid_diameter_clustering"
+author: "Devyani Srivastava"
+date: "2023-02-27"
+output: html_document
+---
+
+**Clustering for diameter dataset**
+
+```{r}
+library(tidyverse)
+library(readr)
+library(cluster)
+library(Hmisc)
+library(ggplot2)
+library(tidyr)
+library(gridExtra)
+library(proxy)
+library(factoextra)
+library(arules)
+library(arulesViz)
+```
+
+```{r}
+doc2_dia<-read.csv('C:/Users/devya/OneDrive/Desktop/ml_osita_codes/ml_project/Asteroid_Diameter.csv')
+doc2_dia %>% head()
+doc2_dia%>% names()
+```
+
+**Calculating the number of missing values in each columns**
+
+```{r}
+ tibble(names(doc2_dia),colSums(is.na(doc2_dia)))
+```
+
+Calculating the number of missing values in target variable
+
+```{r}
+  sum(!is.na(doc2_dia$diameter))
+```
+
+```{r}
+doc2_dia <-doc2_dia %>% drop_na(diameter)
+doc2_dia %>% dim()
+```
+
+```{r}
+tibble(names(doc2_dia),colSums(is.na(doc2_dia)))
+```
+
+```{r}
+doc2_dia <- doc2_dia %>% select(-c('H','albedo','name','rot_per','spec_B',
+             'BV','spec_T','UB','G',
+             'extent','GM','IR'))
+doc2_dia %>% names()
+```
+
+```{r}
+na_cols<-tibble(names(doc2_dia),colSums(is.na(doc2_dia)))
+na_cols
+```
+
+```{r}
+col_type<-tibble(names(doc2_dia),sapply(doc2_dia,class))
+col_type
+```
+```{r}
+doc2_dia_arm<-doc2_dia %>% select(c('class','pha','neo'))
+```
+
+
+```{r}
+doc2_dia %>% select_if(is.character) %>% head()
+
+```
+
+```{r}
+doc2_dia %>%arrange() %>% count(pha)
+doc2_dia %>% arrange() %>% count(neo)
+doc2_dia %>% arrange() %>% count(class)
+```
+
+```{r}
+doc2_dia %>% arrange() %>% count(condition_code)
+```
+
+```{r}
+doc2_dia$condition_code <-doc2_dia$condition_code %>% as.numeric()
+```
+
+```{r}
+col_type
+```
+
+```{r}
+doc2_dia %>% describe() 
+```
+
+```{r}
+doc2_dia %>% hist.data.frame()
+```
+
+```{r eval=FALSE,echo=FALSE}
+doc2_dia %>% ggplot()+geom_boxplot(aes(y='data_arc'))
+```
+
+```{r}
+doc2_dia$data_arc <-as.numeric(doc2_dia$data_arc)
+```
+
+```{r}
+doc2_dia %>% mutate(across(data_arc, ~replace_na(., median(., na.rm=TRUE))))
+```
+
+```{r}
+na_cols
+```
+
+```{r}
+col_type
+```
+
+```{r}
+doc2_dia %>% select_if(is.character) %>% head()
+```
+
+the connection between the classifiers and the intended audience.
+
+The physically dangerous classifer cannot be used for modeling because it is based on the target.
+
+The NEO classifier is not required for further investigation because it is included in the more precise classifier of orbit class.
+
+```{r}
+doc2_dia <-doc2_dia %>% select(-c('neo', 'pha'))
+doc2_dia %>% names()
+```
+
+\*\* for clustering we will consider unlabelled numeric features \*\*
+
+```{r}
+doc_clust<-doc2_dia %>% select(-c('class','condition_code'))
+doc_clust %>% names()
+```
+
+```{r}
+doc_clust<-doc_clust %>% head(2500)
+```
+
+```{r}
+doc_clust_scale<-scale(doc_clust)
+doc_clust_scale
+```
+
+Calculating distance
+
+```{r}
+doc_clust_dist <-dist(doc_clust_scale)
+doc_clust_dist
+```
+
+```{r}
+k2<- kmeans(doc_clust_scale,centers=2,nstart=25)
+k3 <- kmeans(doc_clust_scale,centers=3,nstart=25)
+k4 <- kmeans(doc_clust_scale,centers=4,nstart=25)
+k5 <- kmeans(doc_clust_scale,centers=5,nstart=25)
+k6<- kmeans(doc_clust_scale,centers=6,nstart=25)
+k7<- kmeans(doc_clust_scale,centers=7,nstart=25)
+
+```
+
+```{r}
+
+p1<-fviz_cluster(k2,geom='point',data=df) +ggtitle("k=2")
+p2<-fviz_cluster(k3,geom='point',data=df) +ggtitle("k=3")
+p3<-fviz_cluster(k4,geom='point',data=df) +ggtitle("k=4")
+p4<-fviz_cluster(k5,geom='point',data=df) +ggtitle("k=5")
+p5<-fviz_cluster(k6,geom='point',data=df) +ggtitle("k=6")
+p6<-fviz_cluster(k7,geom='point',data=df) +ggtitle("k=7")
+
+```
+
+```{r}
+grid.arrange(p1,p2,p3,p4,p5,p6,nrow=3)
+```
+
+```{r}
+fviz_nbclust(doc_clust_scale,kmeans,method='wss') + labs(subtitle = 'Elbow Method')
+```
+
+```{r}
+fviz_nbclust(doc_clust,kmeans,method='silhouette')
+```
+**Gap Stat Method**
+
+```{r}
+set.seed(200)
+gap_stat_k <-clusGap(doc_clust,FUN=kmeans,nstart=25, K.max = 20)
+print(gap_stat_k,method='firstmax')
+```
+**Hierarchical clustering**
+
+```{r}
+doc_clust_h<-dist(doc_clust_scale,method='cosine')
+doc_clust_h 
+```
+
+```{r}
+h_doc<-hclust(doc_clust_h,method='ward.D')
+h_doc
+```
+
+**Plotting dendogram**
+
+```{r}
+plot(h_doc)
+rect.hclust(h_doc, k=4,border = 2:5)
+```
+
+```{r}
+plot(h_doc)
+rect.hclust(h_doc, k=3,border = 2:6)
+```
+```{r}
+h_doc_<-hclust(doc_clust_h,method='ward.D')
+h_doc_
+```
+
+
+```{r}
+plot(h_doc_)
+rect.hclust(h_doc_, k=4,border = 2:6)
+```
+```{r}
+h_doc_avg<-hclust(doc_clust_h,method='average')
+plot(h_doc_avg)
+rect.hclust(h_doc_avg, k=4,border = 2:6)
+```
+```{r}
+h_doc_cen<-hclust(doc_clust_h,method='centroid')
+plot(h_doc_cen)
+rect.hclust(h_doc_cen, k=4,border = 2:6)
+```
+
+
+

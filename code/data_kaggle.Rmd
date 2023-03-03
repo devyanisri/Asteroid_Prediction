@@ -8,10 +8,28 @@ output: html_document
 library(dplyr)
 library(tidyverse)
 library(psych)
+library(factoextra)
+library(stringr) 
 ```
 ```{r}
-doc2<-read.csv("C:/Users/devya/OneDrive/Desktop/ML Project Asteroid/Asteroid_Prediction/data/dataset.csv")
+doc2<-read.csv("C:/Users/devya/OneDrive/Desktop/ml_osita_codes/ml_project/dataset.csv")
 head(doc2)
+```
+```{r}
+doc2 %>% names()
+```
+
+```{r}
+doc2$full_name<-gsub('[[:digit:]]+', '', doc2$full_name)
+
+```
+
+
+```{r}
+doc2$full_name<-gsub('[[:digit:]]+', '', doc2$full_name)
+```
+```{r}
+doc2$full_name<-trimws(doc2$full_name,'l')
 ```
 
 
@@ -56,7 +74,7 @@ doc2$class %>% unique() %>%length()
 dropping certain columns
 
 ```{r}
-doc2_1<-doc2 %>% select(-c('id','pdes','name','prefix','equinox',)) %>% head(5000)
+doc2_1<-doc2 %>% select(-c('id','pdes','name','prefix','equinox','spkid'))
 
 ```
 
@@ -111,20 +129,23 @@ doc2_1 %>% arrange() %>%count(class)
 ```{r}
 doc2_1$orbit_id %>% unique() %>% length()
 ```
+```{r}
+doc2_vis<-doc2_1%>% head(5000)
+```
 
 
 EDA
 
 ```{r}
-doc2_1 %>%ggplot()+ geom_bar(aes(x=class))
+doc2_vis %>%ggplot()+ geom_bar(aes(x=class))
 
 ```
 ```{r}
-doc2_1 %>%ggplot()+geom_bar(aes(x="pha"))
+doc2_vis %>%ggplot()+geom_bar(aes(x="pha"))
 ```
 
 ```{r}
-ggplot(doc2_1)+ geom_bar(aes(x="neo",color='pha'))
+ggplot(doc2_vis)+ geom_bar(aes(x="neo",color='pha'))
 ```
 ```{r}
 
@@ -139,25 +160,26 @@ pairs.panels(doc2_1[21:30])
 ```
 
 ```{r}
-pairs.panels(doc2_1[31:40])
+pairs.panels(doc2_1[31:39])
 ```
 
 
 ```{r}
-d<-density(doc2_1$diameter)
+d<-density(doc2_vis$diameter)
 plot(d)
 ```
 ```{r}
-e<-density(doc2_1$e)
+e<-density(doc2_vis$e)
 plot(e)
 ```
 ```{r}
-r_ms<-density(doc2_1$rms)
+r_ms<-density(doc2_vis$rms)
 plot(r_ms)
 ```
 ```{r}
-a_d<-density(doc2_1$ad)
+a_d<-density(doc2_vis$ad)
 plot(a_d)
 ```
+
 
 

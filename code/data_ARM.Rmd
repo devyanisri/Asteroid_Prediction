@@ -1,0 +1,88 @@
+---
+title: "Asteroid_ARM"
+author: "Devyani Srivastava"
+date: "2023-02-28"
+output: html_document
+---
+
+```{r}
+library(tidyverse)
+library(dplyr)
+library(arules)
+library(arulesViz)
+library(ggplot2)
+library(reshape2)
+```
+
+
+```{r}
+doc_arm <-read.csv('Asteroid_Diameter.csv') %>% head(2500)
+
+doc_arm %>% head(10)
+```
+
+```{r}
+
+doc_arm_transaction <-doc_arm %>% select(c('name','neo','pha','class'))
+doc_arm_transaction %>% head()
+```
+```{r}
+doc_arm_transaction$class<-doc_arm_transaction$class %>%as.factor()
+doc_arm_transaction$neo<-doc_arm_transaction$neo %>%as.factor()
+doc_arm_transaction$pha<-doc_arm_transaction$pha %>%as.factor()
+doc_arm_transaction$name<-doc_arm_transaction$name %>%as.factor()
+```
+
+
+```{r}
+asteroid.transactions <- transactions <- as(doc_arm_transaction, "transactions")
+write(transactions, file = "asteroids_transactions.csv", sep = ",", quote = FALSE)
+```
+```{r}
+asteroid.transactions<-read.transactions('asteroids_transactions.csv',format = "basket", rm.duplicates = FALSE, cols = NULL, sep = ",")
+```
+
+
+```{r}
+rules <- arules::apriori(asteroid.transactions, parameter = list(support = 0.045, confidence = 0.05, minlen = 2))
+inspect(rules)
+```
+
+```{r}
+SortRules_Conf <- sort(rules, by = 'confidence', decreasing = TRUE)
+inspect(SortRules_Conf[1:15])
+```
+```{r}
+SortRules_Lift <- sort(rules, by = 'lift', decreasing = TRUE)
+inspect(SortRules_Lift[1:15])
+```
+```{r}
+SortRules_Sup <- sort(rules, by = 'support', decreasing = TRUE)
+inspect(SortRules_Sup[1:15])
+```
+
+```{r}
+plot(SortRules_Conf, method="graph", engine="interactive", limit = 15)
+```
+
+```{r}
+plot(SortRules_Conf,method = 'grouped')
+```
+```{r}
+plot(SortRules_Lift, method="graph", engine="interactive", limit = 15)
+```
+```{r}
+plot(SortRules_Lift, method="grouped")
+```
+
+```{r}
+plot(SortRules_Sup, method="graph", engine="interactive", limit = 15)
+```
+
+```{r}
+plot(SortRules_Sup, method="grouped")
+```
+
+
+
+
